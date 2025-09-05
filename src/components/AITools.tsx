@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FileText, User, Brain, Key } from 'lucide-react';
 import { useGeminiAI } from '@/hooks/useGeminiAI';
+import { InteractiveQuiz } from '@/components/InteractiveQuiz';
 import { toast } from '@/hooks/use-toast';
 
 export const AITools = () => {
@@ -346,7 +347,7 @@ export const AITools = () => {
               <CardHeader>
                 <CardTitle>AI Skills Quiz Generator</CardTitle>
                 <CardDescription>
-                  Generate a personalized quiz to test your knowledge. Score 7+ for a congratulations email!
+                  Generate a personalized quiz to test your knowledge. Score 6+ for a congratulations email!
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -378,14 +379,16 @@ export const AITools = () => {
                   {isLoading ? 'Generating...' : 'Generate Quiz'}
                 </Button>
                 {generatedQuiz && (
-                  <div className="mt-6 p-4 bg-muted rounded-lg">
-                    <h3 className="font-semibold mb-2">Generated Quiz:</h3>
-                    <pre className="whitespace-pre-wrap text-sm">{generatedQuiz}</pre>
-                    <div className="mt-4 p-3 bg-primary/10 rounded border-l-4 border-primary">
-                      <p className="text-sm text-primary font-medium">
-                        💡 Take this quiz and score 7 or higher to receive a congratulations email!
-                      </p>
+                  <div className="space-y-4">
+                    <div className="mt-6 p-4 bg-muted rounded-lg">
+                      <h3 className="font-semibold mb-2">Generated Quiz:</h3>
+                      <pre className="whitespace-pre-wrap text-sm max-h-60 overflow-y-auto">{generatedQuiz}</pre>
                     </div>
+                    <InteractiveQuiz 
+                      quizText={generatedQuiz} 
+                      topic={quizData.topic} 
+                      difficulty={quizData.difficulty} 
+                    />
                   </div>
                 )}
               </CardContent>

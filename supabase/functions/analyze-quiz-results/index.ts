@@ -1,0 +1,179 @@
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from "npm:resend@2.0.0";
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { 
+      email, 
+      userName, 
+      score, 
+      totalQuestions, 
+      topic, 
+      difficulty, 
+      questions, 
+      userAnswers 
+    } = await req.json();
+
+    console.log('Quiz analysis request:', { email, score, totalQuestions, topic });
+
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+
+    // Generate AI analysis using OpenAI
+    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openAIApiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    const analysisPrompt = `Analyze this quiz performance:
+    
+Student: ${userName}
+Topic: ${topic}
+Difficulty: ${difficulty}
+Score: ${score}/${totalQuestions}
+Percentage: ${((score / totalQuestions) * 100).toFixed(0)}%
+
+Quiz Questions and Answers:
+${questions.map((q: any, index: number) => `
+Q${index + 1}: ${q.question}
+Correct Answer: ${String.fromCharCode(65 + q.correctAnswer)}. ${q.options[q.correctAnswer]}
+Student's Answer: ${String.fromCharCode(65 + userAnswers[index])}. ${q.options[userAnswers[index]]}
+${userAnswers[index] === q.correctAnswer ? '✓ Correct' : '✗ Incorrect'}
+`).join('')}
+
+Provide a detailed performance analysis including:
+1. Overall performance summary
+2. Strengths demonstrated
+3. Areas for improvement
+4. Specific recommendations for further study
+5. ${score >= 6 ? 'A congratulatory message for excellent performance' : 'Encouragement and motivation to keep learning'}
+
+Keep the tone professional yet encouraging.`;
+
+    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are an expert career coach and educator providing detailed quiz performance analysis and feedback.' 
+          },
+          { role: 'user', content: analysisPrompt }
+        ],
+        max_tokens: 1000,
+        temperature: 0.7,
+      }),
+    });
+
+    if (!analysisResponse.ok) {
+      throw new Error(`OpenAI API error: ${analysisResponse.statusText}`);
+    }
+
+    const analysisData = await analysisResponse.json();
+    const analysis = analysisData.choices[0].message.content;
+
+    // Send email if score >= 6 using Resend
+    if (score >= 6) {
+      const resendApiKey = Deno.env.get('RESEND_API_KEY');
+      if (!resendApiKey) {
+        console.warn('Resend API key not configured, skipping email');
+      } else {
+        const resend = new Resend(resendApiKey);
+        
+        const emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Congratulations on Your Quiz Performance!</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+            <div style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+                <h1 style="margin: 0; font-size: 24px;">🎉 Congratulations!</h1>
+                <p style="margin: 10px 0 0 0; font-size: 16px;">Excellent Performance on Your ${topic} Quiz</p>
+            </div>
+            
+            <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                <h2 style="color: #1e293b; margin-top: 0;">Quiz Results Summary</h2>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;"><strong>Score:</strong> ${score}/${totalQuestions} (${((score / totalQuestions) * 100).toFixed(0)}%)</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;"><strong>Topic:</strong> ${topic}</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e2e8f0;"><strong>Difficulty:</strong> ${difficulty}</li>
+                    <li style="padding: 8px 0;"><strong>Date:</strong> ${new Date().toLocaleDateString()}</li>
+                </ul>
+            </div>
+
+            <div style="background: white; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
+                <h2 style="color: #1e293b; margin-top: 0;">AI Performance Analysis</h2>
+                <div style="white-space: pre-wrap; font-size: 14px; line-height: 1.5;">${analysis}</div>
+            </div>
+
+            <div style="background: #dcfce7; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; text-align: center;">
+                <p style="margin: 0; color: #166534; font-weight: 500;">
+                    🏆 Great job! Your score of ${score}/${totalQuestions} demonstrates strong knowledge in ${topic}.
+                </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                <p style="color: #64748b; font-size: 12px; margin: 0;">
+                    This email was generated by AI Career Coach - Powered by Gemini AI & OpenAI
+                </p>
+            </div>
+        </body>
+        </html>`;
+
+        try {
+          const emailResult = await resend.emails.send({
+            from: 'AI Career Coach <onboarding@resend.dev>',
+            to: [email],
+            subject: `🎉 Congratulations! You scored ${score}/${totalQuestions} on your ${topic} quiz`,
+            html: emailHtml
+          });
+
+          console.log('Email sent successfully:', emailResult);
+        } catch (emailError) {
+          console.error('Failed to send email:', emailError);
+        }
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      analysis,
+      emailSent: score >= 6,
+      score,
+      totalQuestions
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+
+  } catch (error) {
+    console.error('Error in analyze-quiz-results function:', error);
+    return new Response(JSON.stringify({ 
+      error: error.message,
+      success: false 
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});
