@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { Resend } from "npm:resend@2.0.0";
@@ -33,10 +32,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    // Generate AI analysis using OpenAI
-    const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAIApiKey) {
-      throw new Error('OpenAI API key not configured');
+    // Generate AI analysis using Gemini
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    if (!geminiApiKey) {
+      throw new Error('Gemini API key not configured');
     }
 
     const analysisPrompt = `Analyze this quiz performance:
@@ -64,32 +63,28 @@ Provide a detailed performance analysis including:
 
 Keep the tone professional yet encouraging.`;
 
-    const analysisResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+    const analysisResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { 
-            role: 'system', 
-            content: 'You are an expert career coach and educator providing detailed quiz performance analysis and feedback.' 
-          },
-          { role: 'user', content: analysisPrompt }
-        ],
-        max_tokens: 1000,
-        temperature: 0.7,
+        contents: [{
+          parts: [{
+            text: analysisPrompt
+          }]
+        }]
       }),
     });
 
     if (!analysisResponse.ok) {
-      throw new Error(`OpenAI API error: ${analysisResponse.statusText}`);
+      const error = await analysisResponse.text();
+      console.error('Gemini API error:', error);
+      throw new Error(`Gemini API error: ${analysisResponse.statusText}`);
     }
 
     const analysisData = await analysisResponse.json();
-    const analysis = analysisData.choices[0].message.content;
+    const analysis = analysisData.candidates?.[0]?.content?.parts?.[0]?.text;
 
     // Send email if score >= 6 using Resend
     if (score >= 6) {

@@ -9,6 +9,7 @@ import { FileText, User, Brain, Key } from 'lucide-react';
 import { useGeminiAI } from '@/hooks/useGeminiAI';
 import { InteractiveQuiz } from '@/components/InteractiveQuiz';
 import { toast } from '@/hooks/use-toast';
+import { DownloadButton } from '@/components/DownloadButton';
 
 export const AITools = () => {
   const [apiKey, setApiKey] = useState('');
@@ -266,6 +267,13 @@ export const AITools = () => {
                   <div className="mt-6 p-4 bg-muted rounded-lg">
                     <h3 className="font-semibold mb-2">Generated Cover Letter:</h3>
                     <pre className="whitespace-pre-wrap text-sm">{generatedCoverLetter}</pre>
+                    <div className="mt-4">
+                      <DownloadButton 
+                        content={generatedCoverLetter}
+                        filename={`cover-letter-${coverLetterData.jobTitle.replace(/\s+/g, '-').toLowerCase() || 'document'}.txt`}
+                        title="Download Cover Letter"
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -336,6 +344,13 @@ export const AITools = () => {
                   <div className="mt-6 p-4 bg-muted rounded-lg">
                     <h3 className="font-semibold mb-2">Generated Resume:</h3>
                     <pre className="whitespace-pre-wrap text-sm">{generatedResume}</pre>
+                    <div className="mt-4">
+                      <DownloadButton 
+                        content={generatedResume}
+                        filename={`resume-${resumeData.name.replace(/\s+/g, '-').toLowerCase() || 'document'}.txt`}
+                        title="Download Resume"
+                      />
+                    </div>
                   </div>
                 )}
               </CardContent>
