@@ -86,8 +86,19 @@ Keep the tone professional yet encouraging.`;
     const analysisData = await analysisResponse.json();
     const analysis = analysisData.candidates?.[0]?.content?.parts?.[0]?.text;
 
+    let emailWasSent = false;
+    const plainText = `Congratulations on your ${topic} quiz!
+Score: ${score}/${totalQuestions} (${((score / totalQuestions) * 100).toFixed(0)}%)
+Difficulty: ${difficulty}
+Date: ${new Date().toLocaleDateString()}
+
+AI Performance Analysis:
+${analysis}
+`;
+
+
     // Send email if score >= 6 using Resend
-    if (score >= 6) {
+    if (score >= 8 && email && email.includes("@")) {
       const resendApiKey = Deno.env.get('RESEND_API_KEY');
       if (!resendApiKey) {
         console.warn('Resend API key not configured, skipping email');
@@ -140,11 +151,14 @@ Keep the tone professional yet encouraging.`;
           const emailResult = await resend.emails.send({
             from: 'AI Career Coach <onboarding@resend.dev>',
             to: [email],
-            subject: `🎉 Congratulations! You scored ${score}/${totalQuestions} on your ${topic} quiz`,
-            html: emailHtml
+            subject: `Congratulations! You scored ${score}/${totalQuestions} on your ${topic} quiz`,
+            html: emailHtml,
+            text: plainText,
+            reply_to: 'no-reply@resend.dev',
           });
 
           console.log('Email sent successfully:', emailResult);
+          emailWasSent = true;
         } catch (emailError) {
           console.error('Failed to send email:', emailError);
         }
@@ -154,7 +168,7 @@ Keep the tone professional yet encouraging.`;
     return new Response(JSON.stringify({ 
       success: true, 
       analysis,
-      emailSent: score >= 6,
+      emailSent: emailWasSent,
       score,
       totalQuestions
     }), {
