@@ -31,6 +31,33 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
   const [score, setScore] = useState(0);
   const [userEmail, setUserEmail] = useState('');
 
+  // Only show quiz to authenticated users
+  if (!user) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5" />
+            Interactive Quiz
+          </CardTitle>
+          <CardDescription>
+            Please sign in to access the interactive quiz feature and receive email notifications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground mb-4">
+              Sign in to take quizzes and get personalized AI feedback via email
+            </p>
+            <Button onClick={() => window.location.href = '/auth'}>
+              Sign In to Access Quiz
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const parseQuiz = () => {
     const lines = quizText.split('\n').filter(line => line.trim());
     const parsedQuestions: Question[] = [];
@@ -95,10 +122,10 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
       return;
     }
 
-    if (!user && !userEmail) {
+    if (!user) {
       toast({
-        title: "Email Required",
-        description: "Please enter your email address to receive results.",
+        title: "Authentication Required",
+        description: "Please sign in to submit quizzes and receive email notifications.",
         variant: "destructive",
       });
       return;
@@ -133,10 +160,10 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
         }
       }
 
-      // Send results via edge function (includes email if score >= 6)
+      // Send results via edge function (includes email for all scores)
       const response = await supabase.functions.invoke('analyze-quiz-results', {
         body: {
-          email: user?.email || userEmail,
+          email: user?.email,
           userName: user?.email?.split('@')[0] || 'Student',
           score: finalScore,
           totalQuestions: questions.length,
@@ -153,15 +180,15 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
 
       setShowResults(true);
       
-      if (finalScore >= 6) {
+      if (finalScore >= 5) {
         toast({
           title: "Congratulations! 🎉",
-          description: `You scored ${finalScore}/${questions.length}! Check your email for a congratulations message.`,
+          description: `You scored ${finalScore}/${questions.length}! Check your email for results and feedback.`,
         });
       } else {
         toast({
           title: "Quiz Completed",
-          description: `You scored ${finalScore}/${questions.length}. Keep practicing!`,
+          description: `You scored ${finalScore}/${questions.length}. Check your email for improvement tips!`,
         });
       }
     } catch (error) {
@@ -215,11 +242,19 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {score >= 6 && (
+          {score >= 5 && (
             <div className="p-4 bg-success/10 border border-success/20 rounded-lg text-center">
-              <h3 className="font-semibold text-success mb-2">Excellent Work! 🎉</h3>
+              <h3 className="font-semibold text-success mb-2">Great Job! 🎉</h3>
               <p className="text-sm text-success/80">
-                You've demonstrated strong knowledge in {topic}. Check your email for a congratulations message!
+                You've shown good knowledge in {topic}. Check your email for personalized feedback!
+              </p>
+            </div>
+          )}
+          {score < 5 && (
+            <div className="p-4 bg-muted/50 border border-muted rounded-lg text-center">
+              <h3 className="font-semibold mb-2">Keep Learning! 📚</h3>
+              <p className="text-sm text-muted-foreground">
+                Don't worry! Check your email for tips to improve your {topic} knowledge.
               </p>
             </div>
           )}
@@ -264,26 +299,10 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
           Interactive Quiz: {topic}
         </CardTitle>
         <CardDescription>
-          Answer all questions and score 6+ to get a congratulations email!
+          Answer all questions to receive personalized AI feedback via email
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {!user && (
-          <div className="p-3 bg-muted rounded border">
-            <Label htmlFor="email" className="text-sm font-medium">
-              Email Address (for results)
-            </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your.email@example.com"
-              value={userEmail}
-              onChange={(e) => setUserEmail(e.target.value)}
-              className="mt-1"
-            />
-          </div>
-        )}
-
+        <CardContent className="space-y-6">
         {questions.map((question, questionIndex) => (
           <div key={questionIndex} className="p-4 border rounded-lg">
             <h3 className="font-semibold mb-4">
