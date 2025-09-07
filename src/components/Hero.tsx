@@ -28,8 +28,8 @@ export const Hero = () => {
           </div>
 
           {/* Main heading */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight animate-fade-in-up">
+            <span className="gradient-text">
               AI-Powered
             </span>
             <br />
@@ -37,13 +37,13 @@ export const Hero = () => {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
             Generate professional cover letters and resumes, explore industry insights, 
             and test your skills with AI-generated quizzes
           </p>
 
           {/* Features list */}
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-muted-foreground animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-primary rounded-full" />
               <span>AI Resume Builder</span>
@@ -63,10 +63,11 @@ export const Hero = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
             <Button 
-              size="lg" 
-              className="px-8 py-6 text-lg font-semibold"
+              variant="hero"
+              size="xl" 
+              className="px-12 py-6 text-lg font-semibold"
               onClick={scrollToAITools}
             >
               Start Building Your Career
@@ -74,8 +75,8 @@ export const Hero = () => {
             </Button>
             <Button 
               variant="outline" 
-              size="lg" 
-              className="px-8 py-6 text-lg"
+              size="xl" 
+              className="px-12 py-6 text-lg hover-lift"
               onClick={scrollToCharts}
             >
               View Industry Insights

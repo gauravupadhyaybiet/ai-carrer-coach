@@ -4,6 +4,10 @@ import { IndustryCharts } from '@/components/IndustryCharts';
 import { DataDashboard } from '@/components/DataDashboard';
 import { Features } from '@/components/Features';
 import { Testimonials } from '@/components/Testimonials';
+import { PricingSection } from '@/components/PricingSection';
+import { FAQSection } from '@/components/FAQSection';
+import { NewsletterSection } from '@/components/NewsletterSection';
+import { CTASection } from '@/components/CTASection';
 import { useSupabaseAuth } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -50,30 +54,18 @@ const Index = () => {
       <div className="pt-16">
         <Hero />
         <Features />
-        {!user && (
-          <section className="py-20 bg-muted/50">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
-                <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
-                  Sign in to save your progress, access personalized features, and take your career to the next level
-                </p>
-                <Button onClick={() => navigate('/auth')} size="lg">
-                  <LogIn className="w-5 h-5 mr-2" />
-                  Sign In / Sign Up
-                </Button>
-              </div>
-            </div>
-          </section>
-        )}
         <DataDashboard />
         <div id="ai-tools">
           <AITools />
         </div>
-        <Testimonials />
         <div id="industry-charts">
           <IndustryCharts />
         </div>
+        <Testimonials />
+        <PricingSection />
+        <FAQSection />
+        <NewsletterSection />
+        <CTASection />
       </div>
     </div>
   );
