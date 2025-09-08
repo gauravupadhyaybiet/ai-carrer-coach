@@ -11,7 +11,7 @@ import { CTASection } from '@/components/CTASection';
 import { useSupabaseAuth } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut, BarChart3 } from 'lucide-react';
+import { LogIn, LogOut, BarChart3, User } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut } = useSupabaseAuth();
@@ -30,6 +30,10 @@ const Index = () => {
             Career AI
           </div>
           <div className="flex items-center gap-4">
+            <Button onClick={() => navigate('/portfolio')} variant="ghost" size="sm">
+              <User className="w-4 h-4 mr-2" />
+              Portfolio
+            </Button>
             {user ? (
               <div className="flex items-center gap-4">
                 <Button onClick={() => navigate('/insights')} variant="ghost" size="sm">
