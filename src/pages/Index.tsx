@@ -11,7 +11,7 @@ import { CTASection } from '@/components/CTASection';
 import { useSupabaseAuth } from '@/hooks/useSupabaseData';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, LogOut } from 'lucide-react';
+import { LogIn, LogOut, BarChart3 } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut } = useSupabaseAuth();
@@ -32,6 +32,10 @@ const Index = () => {
           <div className="flex items-center gap-4">
             {user ? (
               <div className="flex items-center gap-4">
+                <Button onClick={() => navigate('/insights')} variant="ghost" size="sm">
+                  <BarChart3 className="w-4 h-4 mr-2" />
+                  Insights
+                </Button>
                 <span className="text-sm text-muted-foreground">
                   Welcome, {user.email}
                 </span>

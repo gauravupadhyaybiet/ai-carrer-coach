@@ -5,13 +5,17 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { FileText, User, Brain, Key } from 'lucide-react';
+import { FileText, User, Brain, Key, Lock } from 'lucide-react';
 import { useGeminiAI } from '@/hooks/useGeminiAI';
 import { InteractiveQuiz } from '@/components/InteractiveQuiz';
 import { toast } from '@/hooks/use-toast';
 import { DownloadButton } from '@/components/DownloadButton';
+import { useSupabaseAuth } from '@/hooks/useSupabaseData';
+import { useNavigate } from 'react-router-dom';
 
 export const AITools = () => {
+  const { user } = useSupabaseAuth();
+  const navigate = useNavigate();
   const [apiKey, setApiKey] = useState('');
   const [showApiKeyInput, setShowApiKeyInput] = useState(true);
   const { generateCoverLetter, generateResume, generateQuiz, isLoading } = useGeminiAI();
@@ -124,6 +128,38 @@ export const AITools = () => {
       console.error('Error generating quiz:', error);
     }
   };
+
+  // Show login required message if user is not authenticated
+  if (!user) {
+    return (
+      <section className="py-20 bg-gradient-to-br from-background via-muted/30 to-accent/10">
+        <div className="container mx-auto px-4">
+          <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="w-6 h-6 text-primary" />
+              </div>
+              <CardTitle>Sign In Required</CardTitle>
+              <CardDescription>
+                Please sign in to access AI-powered career tools
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Button 
+                onClick={() => navigate('/auth')}
+                className="w-full"
+              >
+                Sign In to Continue
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Create your free account to generate resumes, cover letters, and take skills quizzes
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+    );
+  }
 
   if (showApiKeyInput) {
     return (
