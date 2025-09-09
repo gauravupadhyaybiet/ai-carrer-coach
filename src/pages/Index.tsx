@@ -30,10 +30,6 @@ const Index = () => {
             Career AI
           </div>
           <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/portfolio')} variant="ghost" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Portfolio
-            </Button>
             {user ? (
               <div className="flex items-center gap-4">
                 <Button onClick={() => navigate('/insights')} variant="ghost" size="sm">
