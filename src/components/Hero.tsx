@@ -109,6 +109,9 @@ export const Hero = () => {
                   src={heroImage}
                   alt="AI-powered career development workspace"
                   className="w-full h-auto object-cover rounded-2xl"
+                  loading="eager"
+                  width="600"
+                  height="400"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent rounded-2xl" />
               </div>
