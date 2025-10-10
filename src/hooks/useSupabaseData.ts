@@ -15,7 +15,14 @@ export const useProfiles = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setProfiles([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -29,11 +36,7 @@ export const useProfiles = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch profiles';
       setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      console.error('Profile fetch error:', err);
     } finally {
       setLoading(false);
     }
@@ -55,7 +58,14 @@ export const useQuizResults = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        setQuizResults([]);
+        setLoading(false);
+        return;
+      }
+
       const { data, error } = await supabase
         .from('quiz_results')
         .select('*')
@@ -69,11 +79,7 @@ export const useQuizResults = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch quiz results';
       setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
+      console.error('Quiz results fetch error:', err);
     } finally {
       setLoading(false);
     }

@@ -89,50 +89,91 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
       return;
     }
 
-    const lines = quizText.split('\n').filter(line => line.trim());
+    const lines = quizText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
     const parsedQuestions: Question[] = [];
     let currentQuestion: Partial<Question> = {};
     let options: string[] = [];
 
-    for (const line of lines) {
-      if (line.startsWith('Question:')) {
-        if (currentQuestion.question) {
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Match "Question:" or "Question 1:" or just a numbered question
+      if (line.match(/^(Question\s*:?|\d+\.|\d+\))/i)) {
+        // Save previous question if exists
+        if (currentQuestion.question && options.length > 0) {
           parsedQuestions.push({
             question: currentQuestion.question,
             options,
-            correctAnswer: currentQuestion.correctAnswer || 0
+            correctAnswer: currentQuestion.correctAnswer ?? 0
           });
         }
-        currentQuestion = { question: line.replace('Question:', '').trim() };
+
+        // Extract question text
+        let questionText = line
+          .replace(/^Question\s*:?\s*/i, '')
+          .replace(/^\d+[\.)]\s*/, '')
+          .trim();
+
+        currentQuestion = { question: questionText };
         options = [];
-      } else if (line.match(/^[A-D]\)/)) {
-        options.push(line.substring(2).trim());
-      } else if (line.startsWith('Correct Answer:')) {
-        const answer = line.replace('Correct Answer:', '').trim();
-        currentQuestion.correctAnswer = answer.charCodeAt(0) - 65; // Convert A,B,C,D to 0,1,2,3
+      }
+      // Match options: A) or A. or just A)
+      else if (line.match(/^[A-D][\)\.]\s*/i)) {
+        const optionText = line.replace(/^[A-D][\)\.]\s*/i, '').trim();
+        options.push(optionText);
+      }
+      // Match correct answer
+      else if (line.match(/^Correct\s*Answer\s*:?\s*/i)) {
+        const answerText = line.replace(/^Correct\s*Answer\s*:?\s*/i, '').trim();
+        const answerLetter = answerText.charAt(0).toUpperCase();
+        if (answerLetter >= 'A' && answerLetter <= 'D') {
+          currentQuestion.correctAnswer = answerLetter.charCodeAt(0) - 65;
+        }
+      }
+      // If line doesn't match any pattern and we have a current question, it might be part of the question
+      else if (currentQuestion.question && options.length === 0) {
+        currentQuestion.question += ' ' + line;
       }
     }
 
     // Add the last question
-    if (currentQuestion.question) {
+    if (currentQuestion.question && options.length > 0) {
       parsedQuestions.push({
         question: currentQuestion.question,
         options,
-        correctAnswer: currentQuestion.correctAnswer || 0
+        correctAnswer: currentQuestion.correctAnswer ?? 0
       });
     }
 
     if (parsedQuestions.length === 0) {
       toast({
         title: "Parse Error",
-        description: "Unable to parse quiz questions. Please generate a new quiz.",
+        description: "Unable to parse quiz questions. The format may not be correct. Please try generating a new quiz.",
         variant: "destructive",
       });
+      console.error('Failed to parse quiz. Text:', quizText);
+      return;
+    }
+
+    // Validate that all questions have 4 options
+    const invalidQuestions = parsedQuestions.filter(q => q.options.length !== 4);
+    if (invalidQuestions.length > 0) {
+      toast({
+        title: "Parse Error",
+        description: `Some questions don't have exactly 4 options. Found questions with ${invalidQuestions[0].options.length} options.`,
+        variant: "destructive",
+      });
+      console.error('Invalid question format:', invalidQuestions);
       return;
     }
 
     setQuestions(parsedQuestions);
     setUserAnswers(new Array(parsedQuestions.length).fill(-1));
+
+    toast({
+      title: "Quiz Ready!",
+      description: `Successfully loaded ${parsedQuestions.length} questions.`,
+    });
   };
 
   const handleAnswerChange = (questionIndex: number, answerIndex: number) => {
