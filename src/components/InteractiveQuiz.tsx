@@ -23,7 +23,7 @@ interface InteractiveQuizProps {
 }
 
 export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuizProps) => {
-  const { user } = useSupabaseAuth();
+  const { user, loading: authLoading } = useSupabaseAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [userAnswers, setUserAnswers] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +32,27 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
   const [userEmail, setUserEmail] = useState('');
 
   // Only show quiz to authenticated users
+  if (authLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5" />
+            Interactive Quiz
+          </CardTitle>
+          <CardDescription>
+            Loading...
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">Checking authentication...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!user) {
     return (
       <Card>
@@ -59,6 +80,15 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
   }
 
   const parseQuiz = () => {
+    if (!quizText || quizText.trim().length === 0) {
+      toast({
+        title: "Invalid Quiz",
+        description: "No quiz content available to parse.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const lines = quizText.split('\n').filter(line => line.trim());
     const parsedQuestions: Question[] = [];
     let currentQuestion: Partial<Question> = {};
@@ -90,6 +120,15 @@ export const InteractiveQuiz = ({ quizText, topic, difficulty }: InteractiveQuiz
         options,
         correctAnswer: currentQuestion.correctAnswer || 0
       });
+    }
+
+    if (parsedQuestions.length === 0) {
+      toast({
+        title: "Parse Error",
+        description: "Unable to parse quiz questions. Please generate a new quiz.",
+        variant: "destructive",
+      });
+      return;
     }
 
     setQuestions(parsedQuestions);
